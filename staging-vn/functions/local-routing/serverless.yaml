@@ -84,6 +84,7 @@ functions:
       DB_PORT: "5432"
         # "Fn::GetAtt": [DataSource, Endpoint.Port]
       ASPNETCORE_ENVIRONMENT: ""
+      SCHEMA_NAME: ""
       S3_BUCKET_NAME: ${env:S3_BUCKET_NAME}
     # you can add packaging information here
     vpc: # Optional VPC. But if you use VPC then both subproperties (securityGroupIds and subnetIds) are required
