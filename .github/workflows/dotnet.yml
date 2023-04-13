@@ -5,7 +5,7 @@ on:
       - master-staging-vn-env
     paths:
       - 'staging-vn/functions/local-routing/serverless.yml'
-      - '.github/workflows/deploy-local-routing.yaml'
+      - '.github/workflows/dotnet.yaml'
 
 env:
   REPO_NAME: local-routing # {"$kpt-set":"app"}
