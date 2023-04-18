@@ -2,9 +2,9 @@ name: Deploy function local-routing to staging-vn
 on:
   push:
     branches: 
-      - master-staging-vn-env
+      - customer_5111
     paths:
-      - 'staging-vn/functions/local-routing/serverless.yml'
+      - 'staging-vn/functions/local-routing-multi-customer/serverless.yml'
       - '.github/workflows/dotnet.yaml'
 
 env:
@@ -52,3 +52,4 @@ jobs:
         #run: |
           #npm install -g newman
           #newman run staging-vn/functions/${{ env.REPO_NAME }}/SR3_S3.postman_collection.json .
+
