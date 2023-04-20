@@ -1,0 +1,380 @@
+# Welcome to Serverless!
+#
+# This file is the main config file for your service.
+# It's very minimal at this point and uses default values.
+# You can always add more config options for more control.
+# We've included some commented out config examples here.
+# Just uncomment any of them to get that config option.
+#
+# For full config options, check the docs:
+#    docs.serverless.com
+#
+# Happy Coding!
+
+service: local-routing-service-customer_97
+# app and org for use with dashboard.serverless.com
+#app: your-app-name
+#org: your-org-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+frameworkVersion: '3'
+
+custom:
+  version: 1.0.132
+
+provider:
+  name: aws
+  runtime: dotnet6
+  stage: staging-vn
+  region: eu-central-1
+  httpApi:
+    payload: '1.0' #Or use 1.0
+
+# you can overwrite defaults here
+#  stage: staging-vn
+#  region: us-east-1
+
+# you can add statements to the Lambda function's IAM Role here
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:ListBucket"
+        - "s3:*"
+      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - "Ref" : "ServerlessDeploymentBucket"
+            - "/*"
+    - Effect: "Allow"
+      Action:
+        - "s3:GetObject"
+        - "s3:PutObject"
+      Resource: "arn:aws:s3:::${env:S3_BUCKET_NAME}/*"
+
+# you can define service wide environment variables here
+#  environment:
+#    variable1: value1 test
+
+package:
+  individually: true
+
+functions:
+  local-routing:
+    handler: LocalRouting::LocalRouting.Function::FunctionHandler
+    timeout: 300
+    memorySize: 3072
+    events:
+      - schedule:
+          rate: rate(5 minutes)
+          enabled: true
+          input: >-
+            "{\\"ping\\": 1}"
+    environment:
+      DB_HOST: "ldy4crludbqn45.ckkdeyoumjwc.eu-central-1.rds.amazonaws.com"
+        # "Fn::GetAtt": [DataSource, Endpoint.Address]
+      DB_NAME: routing3staging
+      DB_USER: ${env:DB_USER}
+      DB_PASSWORD: ${env:DB_PASSWORD}
+      DB_PORT: "5432"
+        # "Fn::GetAtt": [DataSource, Endpoint.Port]
+      ASPNETCORE_ENVIRONMENT: ""
+      DB_SCHEMA: 'customer_97'
+      S3_BUCKET_NAME: ''
+    # you can add packaging information here
+    vpc: # Optional VPC. But if you use VPC then both subproperties (securityGroupIds and subnetIds) are required
+      securityGroupIds:
+        - "Fn::GetAtt": [ServerlessSecurityGroup, GroupId]
+      subnetIds:
+        - Ref: PrivateSubnetA
+        - Ref: PrivateSubnetB
+    package:
+      artifact: local-routing-${self:custom.version}.zip
+    # environment: 123
+    #   S3_BUCKET_NAME:
+    #     'Fn::ImportValue': '${opt:stage, self:provider.stage}-LocalRoutingMapCache'
+      #FUNCTIONNAME_ARN: 
+        #  exclude:
+    #    - exclude-me.js
+    #    - exclude-me-dir/**
+#    The following are a few example events you can configure
+#    NOTE: Please make sure to change your handler code to work with those events
+#    Check the event documentation for details
+#    events:
+#      - http:
+#          path: users/create
+#          method: get
+#      - websocket: $connect
+#      - s3: ${env:BUCKET}
+#      - schedule: rate(10 minutes)
+#      - sns: greeter-topic
+#      - stream: arn:aws:dynamodb:region:XXXXXX:table/foo/stream/1970-01-01T00:00:00.000
+#      - alexaSkill: amzn1.ask.skill.xx-xx-xx-xx
+#      - alexaSmartHome: amzn1.ask.skill.xx-xx-xx-xx
+#      - iot:
+#          sql: "SELECT * FROM 'some_topic'"
+#      - cloudwatchEvent:
+#          event:
+#            source:
+#              - "aws.ec2"
+#            detail-type:
+#              - "EC2 Instance State-change Notification"
+#            detail:
+#              state:
+#                - pending
+#      - cloudwatchLog: '/aws/lambda/hello'
+#      - cognitoUserPool:
+#          pool: MyUserPool
+#          trigger: PreSignUp
+#      - alb:
+#          listenerArn: arn:aws:elasticloadbalancing:us-east-1:XXXXXX:listener/app/my-load-balancer/50dc6c495c0c9188/
+#          priority: 1
+#          conditions:
+#            host: example.com
+#            path: /hello
+
+#    Define function environment variables here
+#    environment:
+#      variable2: value2
+
+# you can add CloudFormation resource templates here
+#resources:Ref PrivateSubnetB
+#  Outputs:
+#     NewOutput:
+#       Description: "Description for the output"
+#       Value: "Some output value"
+resources:
+  Outputs:
+    VPCId:
+      Value: !Ref VPC
+      Export:
+        Name: ${self:provider.stage}-VPCId
+    SGId:
+      Value: !GetAtt ServerlessSecurityGroup.GroupId
+      Export:
+        Name: ${self:provider.stage}-LambdaSecurityGroupId
+    StorageSGId:
+      Value: !GetAtt ServerlessStorageSecurityGroup.GroupId
+      Export:
+        Name: ${self:provider.stage}-StorageSecurityGroupId
+    PrivateSubnetA:
+      Value: !Ref PrivateSubnetA
+      Export:
+        Name: ${self:provider.stage}-PrivateSubnetA
+    PrivateSubnetB:
+      Value: !Ref PrivateSubnetB
+      Export:
+        Name: ${self:provider.stage}-PrivateSubnetB
+    # DBHost:
+      # Value: !GetAtt DataSource.Endpoint.Address #"local-routing-service-staging-vn-datasource-g4v0piavgmqk.cr4y72b0drh0.eu-central-1.rds.amazonaws.com" #!GetAtt DataSource.Endpoint.Address
+      # Export:
+        # Name: ${self:provider.stage}-DBHost
+    DBPort:
+      Value: "5432" #!GetAtt DataSource.Endpoint.Port
+      Export:
+        Name: ${self:provider.stage}-DBPort
+    CacheFilesBucket:
+      Value: !Ref CacheFilesBucket
+      Export:
+        Name: ${self:provider.stage}-CacheFilesBucket
+  Resources:
+    CacheFilesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${env:S3_BUCKET_NAME}
+    VPC:
+      Type: AWS::EC2::VPC
+      Properties:
+        CidrBlock: "10.0.0.0/16"
+        EnableDnsHostnames: true
+    S3Endpoint:
+      Type: 'AWS::EC2::VPCEndpoint'
+      Properties:
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal: '*'
+              Action: '*'
+              Resource: '*'
+        RouteTableIds:
+          - Ref: PrivateRouteTableA
+          - Ref: PrivateRouteTableB
+        ServiceName: !Sub 'com.amazonaws.${self:provider.region}.s3'
+        VpcId: 
+          Ref: VPC
+    IP:
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: vpc
+    InternetGateway:
+      Type: AWS::EC2::InternetGateway
+    VPCGatewayAttachment:
+      Type: AWS::EC2::VPCGatewayAttachment
+      Properties:
+        VpcId:
+          Ref: VPC
+        InternetGatewayId:
+          Ref: InternetGateway
+    PrivateSubnetA:
+      DependsOn: VPC
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId:
+          Ref: VPC
+        AvailabilityZone: ${self:provider.region}a
+        CidrBlock: "10.0.1.0/24"
+        MapPublicIpOnLaunch: true
+    PrivateSubnetB:
+      DependsOn: VPC
+      Type: AWS::EC2::Subnet
+      Properties:
+        VpcId:
+          Ref: VPC
+        AvailabilityZone: ${self:provider.region}b
+        CidrBlock: "10.0.2.0/24"
+        MapPublicIpOnLaunch: true
+    PrivateRouteTableA:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId:
+          Ref: VPC
+    PrivateRouteA:
+      Type: AWS::EC2::Route
+      Properties:
+        RouteTableId:
+          Ref: PrivateRouteTableA
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId:
+          Ref: InternetGateway
+    PrivateRouteTableB:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId:
+          Ref: VPC
+    PrivateRouteB:
+      Type: AWS::EC2::Route
+      Properties:
+        RouteTableId:
+          Ref: PrivateRouteTableB
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId:
+          Ref: InternetGateway
+    SubnetRouteTableAssociationLambdaPrivateA:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId:
+          Ref: PrivateSubnetA
+        RouteTableId:
+          Ref: PrivateRouteTableA
+    SubnetRouteTableAssociationLambdaPrivateB:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId:
+          Ref: PrivateSubnetB
+        RouteTableId:
+          Ref: PrivateRouteTableB
+    ServerlessSecurityGroup:
+      DependsOn: VPC
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupName: ${self:provider.stage}-ServerlessSecurityGroup                                                         
+        GroupDescription: SecurityGroup for Serverless Functions
+        VpcId:
+          Ref: VPC
+    ServerlessSecurityGroupIngress:
+      DependsOn: VPC
+      Type: AWS::EC2::SecurityGroupIngress
+      Properties:
+        Description: SecurityGroup for Serverless Functions
+        GroupId: 
+          Ref: ServerlessSecurityGroup
+        IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        SourceSecurityGroupId:
+          Ref: ServerlessSecurityGroup
+    ServerlessStorageSecurityGroup:
+      DependsOn: VPC
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Ingress for Memcached/RDS Cluster
+        GroupName: ${self:provider.stage}-ServerlessStorageSecurityGroup                                                                
+        VpcId:
+          Ref: VPC
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 11211
+          ToPort: 11211
+          SourceSecurityGroupId:
+            Ref: ServerlessSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId:
+            Ref: ServerlessSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId:
+            Ref: ServerlessSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 185.160.73.126/32
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 113.160.252.73/32 # vn IP
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 123.25.108.221/32
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 27.71.248.216/29
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 83.162.193.198/32
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 82.94.168.194/32 # Cocon customer IP
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 176.74.244.192/27
+    DataSourceSubNetGroup:
+      Type: AWS::RDS::DBSubnetGroup
+      Properties:
+        DBSubnetGroupName: ${self:provider.stage}-DataSourceSubNetGroup                                                               
+        DBSubnetGroupDescription: Created by CF
+        SubnetIds:
+          - Ref: PrivateSubnetA
+          - Ref: PrivateSubnetB
+    # DataSource:
+      # DependsOn: ServerlessStorageSecurityGroup
+      # Type: AWS::RDS::DBInstance
+      # Properties:
+        # AllocatedStorage: '700'
+        # DeletionProtection: true
+        # DBInstanceClass: db.m6g.large
+        # DBName: routing
+        # DBSubnetGroupName: 
+          # Ref: DataSourceSubNetGroup
+        # Engine: postgres
+        # EngineVersion: '12.8'
+        # MasterUsername: ${env:DB_USER}
+        # MasterUserPassword: ${env:DB_PASSWORD}
+        # PubliclyAccessible: true
+        # VPCSecurityGroups:
+        # - Ref: ServerlessStorageSecurityGroup
+      # DeletionPolicy: Snapshot
+
