@@ -6,6 +6,7 @@ on:
     paths:
       - 'staging-vn/functions/local-routing/serverless.yml'
       - '.github/workflows/dotnet.yaml'
+      - 'staging-vn/functions/local-routing-trigger-customer_1234568/serverless.yml'
 
 env:
   REPO_NAME: local-routing # {"$kpt-set":"app"}
@@ -52,3 +53,4 @@ jobs:
         #run: |
           #npm install -g newman
           #newman run staging-vn/functions/${{ env.REPO_NAME }}/SR3_S3.postman_collection.json .
+
