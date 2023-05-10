@@ -11,7 +11,7 @@
 #
 # Happy Coding!
 
-service: local-routing-service-customer_123456
+service: local-routing-service-customer_1234567
 # app and org for use with dashboard.serverless.com
 #app: your-app-name
 #org: your-org-name
