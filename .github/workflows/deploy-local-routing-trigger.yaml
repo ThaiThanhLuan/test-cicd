@@ -2,7 +2,7 @@ name: Deploy function local-routing to staging-vn
 on:
   push:
     branches: 
-      - master-staging-vn-env
+      - main
     paths:
       - 'staging-vn/functions/local-routing/serverless.yml'
       - '.github/workflows/dotnet.yaml'
