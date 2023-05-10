@@ -5,7 +5,7 @@ on:
       - main
     paths:
       - 'staging-vn/functions/local-routing/serverless.yml'
-      - '.github/workflows/dotnet.yaml'
+      - '.github/workflows/deploy-local-routing-trigger.yaml'
       - 'staging-vn/functions/local-routing-trigger-customer_1234568/serverless.yml'
 
 env:
