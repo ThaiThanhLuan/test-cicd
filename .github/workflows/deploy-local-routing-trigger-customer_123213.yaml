@@ -1,0 +1,67 @@
+name: Deploy function local-routing to staging-vn
+on:
+  push:
+    branches: 
+      - main
+    paths:
+      - 'staging-vn/functions/local-routing/serverless.yml'
+      - 'staging-vn/functions/local-routing-trigger-customer_123213/serverless.yml'
+      - 'staging-vn/functions/local-routing-trigger-customer_2222/serverless.yml'
+      - 'staging-vn/functions/local-routing-trigger-customer_208/serverless.yml'
+      - 'staging-vn/functions/local-routing-trigger-customer_luant1/serverless.yml'
+      - 'staging-vn/functions/local-routing-trigger-customer_luanthai/serverless.yml'
+      - 'staging-vn/functions/local-routing-trigger-customer_thanhluan/serverless.yml'
+      - 'staging-vn/functions/local-routing-trigger-customer_1234568/serverless.yml'
+
+env:
+  REPO_NAME: local-routing # {"$kpt-set":"app"}
+
+jobs:
+  job1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: Install yq
+        run: |
+          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.6.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.ROUTING3_STAGING_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.ROUTING3_STAGING_AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+      
+      - name: Prepare Serverless framework #serverless/github-action can only be run frm the root directory.
+        run: mv staging-vn/functions/${{ env.REPO_NAME }}/serverless.yml .
+
+      - name: Download Function zip to Runner
+        run: |
+          aws s3 cp s3://${{ env.BUCKET }}/${{ env.REPO_NAME }}-$(yq e '.custom.version' serverless.yml).zip .
+        env:
+          BUCKET: routing2-lambda-packages
+
+      - name: Deploy function to staging-vn
+        uses: serverless/github-action@master
+        with:
+          args: deploy --stage staging-vn
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.ROUTING3_STAGING_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.ROUTING3_STAGING_AWS_SECRET_ACCESS_KEY }}
+          DB_USER: infodationpg
+          DB_PASSWORD: ""
+          S3_BUCKET_NAME: "routing3-staging-vn-cache-files"
+      #- name: Run testing Postman
+        #run: |
+          #npm install -g newman
+          #newman run staging-vn/functions/${{ env.REPO_NAME }}/SR3_S3.postman_collection.json .
+
+
+
+
+
+
+
